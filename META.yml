@@ -1,9 +1,9 @@
 --- #YAML:1.0
 name:               Redis
-version:            1.2001
+version:            1.900_01
 abstract:           perl binding for Redis database
 author:
-    - Dobrica Pavlinusic <dpavlin@rot13.org>
+    - Pedro Melo <melo@simplicidade.org>
 license:            unknown
 distribution_type:  module
 configure_requires:
@@ -14,13 +14,24 @@ requires:
     Carp:              0
     Data::Dumper:      0
     Encode:            0
+    Exporter:          0
+    Fcntl:             0
+    File::Temp:        0
+    Guard:             0
+    IO::Handle:        0
+    IO::Select:        0
     IO::Socket::INET:  0
-    Test::More:        0
+    IO::String:        0
+    POSIX:             0
+    Test::Deep:        0
+    Test::Exception:   0
+    Test::More:        0.92
+    Tie::Hash:         0
 no_index:
     directory:
         - t
         - inc
-generated_by:       ExtUtils::MakeMaker version 6.55_02
+generated_by:       ExtUtils::MakeMaker version 6.56
 meta-spec:
     url:      http://module-build.sourceforge.net/META-spec-v1.4.html
     version:  1.4
