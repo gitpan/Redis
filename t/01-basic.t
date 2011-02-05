@@ -300,10 +300,17 @@ isa_ok($info, 'HASH');
 
 ## Connection handling
 
-ok($o->quit, 'quit');
+ok($o->ping,  'ping() is true');
+ok($o->quit,  'quit');
+ok(!$o->ping, '... but after quit() returns false');
 
-throws_ok sub { Redis->new(server => '127.0.0.1:1') },
-  qr/Could not connect to Redis server at 127[.]0[.]0[.]1:1:/,
+$o = Redis->new(server => $srv);
+$o->shutdown();
+ok(!$o->ping(), 'ping() also false after shutdown()');
+
+sleep(1);
+throws_ok sub { Redis->new(server => $srv) },
+  qr/Could not connect to Redis server at $srv/,
   'Failed connection throws exception';
 
 

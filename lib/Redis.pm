@@ -17,7 +17,7 @@ Redis - perl binding for Redis database
 
 =cut
 
-our $VERSION = '1.901';
+our $VERSION = '1.902';
 
 =head1 SYNOPSIS
 
@@ -157,6 +157,32 @@ sub quit {
   close(delete $self->{sock}) || confess("Can't close socket: $!");
 
   return 1;
+}
+
+sub shutdown {
+  my ($self) = @_;
+
+  $self->__send_command('SHUTDOWN');
+  close(delete $self->{sock}) || confess("Can't close socket: $!");
+
+  return 1;
+}
+
+sub ping {
+  my ($self) = @_;
+  return unless exists $self->{sock};
+
+  my $reply;
+  eval {
+    $self->__send_command('PING');
+    $reply = $self->__read_response('PING');
+  };
+  if ($@) {
+    close(delete $self->{sock});
+    return;
+  }
+
+  return $reply;
 }
 
 sub info {
