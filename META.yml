@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Redis
-version:            1.902
+version:            1.903
 abstract:           perl binding for Redis database
 author:
     - Pedro Melo <melo@simplicidade.org>
@@ -17,7 +17,6 @@ requires:
     Exporter:          0
     Fcntl:             0
     File::Temp:        0
-    Guard:             0
     IO::Handle:        0
     IO::Select:        0
     IO::Socket::INET:  0
@@ -25,7 +24,7 @@ requires:
     POSIX:             0
     Test::Deep:        0
     Test::Exception:   0
-    Test::More:        0.92
+    Test::More:        0.96
     Tie::Hash:         0
 no_index:
     directory:
