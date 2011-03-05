@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Redis
-version:            1.903
+version:            1.904
 abstract:           perl binding for Redis database
 author:
     - Pedro Melo <melo@simplicidade.org>

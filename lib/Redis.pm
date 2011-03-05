@@ -17,7 +17,7 @@ Redis - perl binding for Redis database
 
 =cut
 
-our $VERSION = '1.903';
+our $VERSION = '1.904';
 
 =head1 SYNOPSIS
 
@@ -372,6 +372,8 @@ sub __read_response_r {
     return $self->__read_len($result + 2);
   }
   elsif ($type eq '*') {
+    return if $result < 0;
+
     my @list;
     while ($result--) {
       push @list, scalar($self->__read_response_r($command));
