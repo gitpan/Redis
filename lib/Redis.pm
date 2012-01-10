@@ -4,12 +4,15 @@ use warnings;
 use strict;
 
 use IO::Socket::INET;
+use IO::Socket::UNIX;
 use IO::Select;
 use IO::Handle;
 use Fcntl qw( O_NONBLOCK F_SETFL );
 use Data::Dumper;
 use Carp qw/confess/;
 use Encode;
+use Try::Tiny;
+use Scalar::Util ();
 
 =head1 NAME
 
@@ -17,7 +20,7 @@ Redis - perl binding for Redis database
 
 =cut
 
-our $VERSION = '1.904';
+our $VERSION = '1.925';
 
 =head1 SYNOPSIS
 
@@ -25,6 +28,17 @@ our $VERSION = '1.904';
     my $redis = Redis->new;
     
     my $redis = Redis->new(server => 'redis.example.com:8080');
+    
+    ## Use UNIX domain socket
+    my $redis = Redis->new(sock => '/path/to/socket');
+    
+    ## Enable auto-reconnect
+    ## Try to reconnect every 500ms up to 60 seconds until success
+    ## Die if you can't after that
+    my $redis = Redis->new(reconnect => 60);
+    
+    ## Try each 100ms upto 2 seconds (every is in milisecs)
+    my $redis = Redis->new(reconnect => 2, every => 100);
     
     ## Disable the automatic utf8 encoding => much more performance
     my $redis = Redis->new(encoding => undef);
@@ -68,9 +82,9 @@ This version supports protocol 2.x (multi-bulk) or later of Redis
 available at L<https://github.com/antirez/redis/>.
 
 This documentation lists commands which are exercised in test suite, but
-additinal commands will work correctly since protocol specifies enough
-information to support almost all commands with same peace of code with
-a little help of C <AUTOLOAD> .
+additional commands will work correctly since protocol specifies enough
+information to support almost all commands with same piece of code with
+a little help of C<AUTOLOAD>.
 
 
 =head1 METHODS
@@ -81,27 +95,103 @@ a little help of C <AUTOLOAD> .
 
     my $r = Redis->new( server => '192.168.0.1:6379', debug => 0 );
     my $r = Redis->new( server => '192.168.0.1:6379', encoding => undef );
+    my $r = Redis->new( sock => '/path/to/sock' );
+    my $r = Redis->new( reconnect => 60, every => 5000 );
+
+The C<< server >> parameter specifies the Redis server we should connect
+to, via TCP. Use the 'IP:PORT' format. If no C<< server >> option is
+present, we will attempt to use the C<< REDIS_SERVER >> environment
+variable. If neither of those options are present, it defaults to
+'127.0.0.1:6379'.
+
+Alternatively you can use the C<< sock >> parameter to specify the path
+of the UNIX domain socket where the Redis server is listening.
+
+The C<< REDIS_SERVER >> can be used for UNIX domain sockets too. The following formats are supported:
+
+=over 4
+
+=item /path/to/sock
+
+=item unix:/path/to/sock
+
+=item 127.0.0.1:11011
+
+=item tcp:127.0.0.1:11011
+
+=back
+
+The C<< encoding >> parameter speficies the encoding we will use to
+decode all the data we receive and encode all the data sent to the redis
+server. Due to backwards-compatibility we default to C<< utf8 >>. To
+disable all this encoding/decoding, you must use C<<encoding => undef>>.
+B<< This is the recommended option >>.
+
+B<< Warning >>: this option has several problems and it is
+B<deprecated>. A future version will add a safer option.
+
+The C<< reconnect >> option enables auto-reconnection mode. If we cannot
+connect to the Redis server, or if a network write fails, we enter retry
+mode. We will try a new connection every C<< every >> miliseconds
+(1000ms by default), up-to C<< reconnect >> seconds.
+
+Be aware that read errors will always thrown an exception, and will not
+trigger a retry until the new command is sent.
+
+If we cannot re-establish a connection after C<< reconnect >> seconds,
+an exception will be thrown.
+
+The C<< debug >> parameter enables debug information to STDERR,
+including all interactions with the server. You can also enable debug
+with the C<REDIS_DEBUG> environment variable.
 
 =cut
 
 sub new {
   my $class = shift;
-  my $self  = {@_};
+  my %args  = @_;
+  my $self  = bless {}, $class;
 
-  $self->{debug} ||= $ENV{REDIS_DEBUG};
-  $self->{encoding} = 'utf8'
-    unless exists $self->{encoding};    ## default to lax utf8
+  $self->{debug} = $args{debug} || $ENV{REDIS_DEBUG};
 
-  $self->{server} ||= $ENV{REDIS_SERVER} || '127.0.0.1:6379';
-  $self->{sock} = IO::Socket::INET->new(
-    PeerAddr => $self->{server},
-    Proto    => 'tcp',
-  ) || confess("Could not connect to Redis server at $self->{server}: $!");
+  ## default to lax utf8
+  $self->{encoding} = exists $args{encoding}? $args{encoding} : 'utf8';
+
+  ## Deal with REDIS_SERVER ENV
+  if ($ENV{REDIS_SERVER} && !$args{sock} && !$args{server}) {
+    if ($ENV{REDIS_SERVER} =~ m!^/!) {
+      $args{sock} = $ENV{REDIS_SERVER};
+    }
+    elsif ($ENV{REDIS_SERVER} =~ m!^unix:(.+)!) {
+      $args{sock} = $1;
+    }
+    elsif ($ENV{REDIS_SERVER} =~ m!^(tcp:)?(.+)!) {
+      $args{server} = $2;
+    }
+  }
+
+  if ($args{sock}) {
+    $self->{server} = $args{sock};
+    $self->{builder} = sub { IO::Socket::UNIX->new($_[0]->{server}) };
+  }
+  else {
+    $self->{server} = $args{server} || '127.0.0.1:6379';
+    $self->{builder} = sub {
+      IO::Socket::INET->new(
+        PeerAddr => $_[0]->{server},
+        Proto    => 'tcp',
+      );
+    };
+  }
 
   $self->{is_subscriber} = 0;
   $self->{subscribers}   = {};
+  $self->{reconnect}     = $args{reconnect} || 0;
+  $self->{every}         = $args{every} || 1000;
 
-  return bless($self, $class);
+  $self->__connect;
+
+  return $self;
 }
 
 sub is_subscriber { $_[0]{is_subscriber} }
@@ -116,13 +206,32 @@ our $AUTOLOAD;
 
 sub AUTOLOAD {
   my $self = shift;
-  my $sock = $self->{sock} || confess("Not connected to any server");
-  my $enc  = $self->{encoding};
-  my $deb  = $self->{debug};
 
   my $command = $AUTOLOAD;
   $command =~ s/.*://;
   $self->__is_valid_command($command);
+
+  ## Fast path, no reconnect
+  return $self->__run_cmd($command, @_) unless $self->{reconnect};
+
+  my @cmd_args = @_;
+  return try {
+    $self->__run_cmd($command, @cmd_args);
+  }
+  catch {
+    die $_ unless ref($_) eq 'Redis::X::Reconnect';
+
+    $self->__connect;
+    $self->__run_cmd($command, @cmd_args);
+  };
+}
+
+sub __run_cmd {
+  my $self    = shift;
+  my $command = shift;
+  my $sock    = $self->{sock} || $self->__try_reconnect('Not connected to any server');
+  my $enc     = $self->{encoding};
+  my $deb     = $self->{debug};
 
   ## PubSub commands use a different answer handling
   if (my ($pr, $unsub) = $command =~ /^(p)?(un)?subscribe$/i) {
@@ -151,9 +260,9 @@ sub AUTOLOAD {
 ### Commands with extra logic
 sub quit {
   my ($self) = @_;
+  return unless $self->{sock};
 
   $self->__send_command('QUIT');
-
   close(delete $self->{sock}) || confess("Can't close socket: $!");
 
   return 1;
@@ -161,6 +270,7 @@ sub quit {
 
 sub shutdown {
   my ($self) = @_;
+  return unless $self->{sock};
 
   $self->__send_command('SHUTDOWN');
   close(delete $self->{sock}) || confess("Can't close socket: $!");
@@ -304,6 +414,38 @@ sub __is_valid_command {
 
 
 ### Socket operations
+sub __connect {
+  my ($self) = @_;
+  delete $self->{sock};
+
+  ## Fast path, no reconnect
+  return $self->__build_sock() unless $self->{reconnect};
+
+  ## Use precise timers on reconnections
+  require Time::HiRes;
+  my $t0 = [Time::HiRes::gettimeofday()];
+
+  ## Reconnect...
+  while (1) {
+    eval { $self->__build_sock };
+
+    last unless $@;    ## Connected!
+    die if Time::HiRes::tv_interval($t0) > $self->{reconnect};    ## Timeout
+    Time::HiRes::usleep($self->{every});                          ## Retry in...
+  }
+
+  return;
+}
+
+sub __build_sock {
+  my ($self) = @_;
+
+  $self->{sock} = $self->{builder}->($self)
+    || confess("Could not connect to Redis server at $self->{server}: $!");
+
+  return;
+}
+
 sub __send_command {
   my $self = shift;
   my $cmd  = uc(shift);
@@ -322,10 +464,11 @@ sub __send_command {
 
   ## Send command, take care for partial writes
   warn "[SEND RAW] $buf" if $deb;
-  my $sock = $self->{sock} || confess("Not connected to any server");
+  my $sock = $self->{sock}
+    || $self->__try_reconnect('Not connected to any server');
   while ($buf) {
     my $len = syswrite $sock, $buf, length $buf;
-    confess("Could not write to Redis server: $!")
+    $self->__try_reconnect("Could not write to Redis server: $!")
       unless $len;
     substr $buf, 0, $len, "";
   }
@@ -408,7 +551,7 @@ sub __read_line {
 sub __read_len {
   my ($self, $len) = @_;
 
-  my $data;
+  my $data = '';
   my $offset = 0;
   while ($len) {
     my $bytes = read $self->{sock}, $data, $len, $offset;
@@ -470,6 +613,16 @@ BEGIN {
   *__fh_nonblocking = ($^O eq 'MSWin32')
     ? sub($$) { ioctl $_[0], 0x8004667e, pack "L", $_[1]; }    # FIONBIO
     : sub($$) { fcntl $_[0], F_SETFL, $_[1] ? O_NONBLOCK : 0; };
+}
+
+
+##########################
+# I take exception to that
+
+sub __try_reconnect {
+  my ($self, $m) = @_;
+  die bless(\$m, 'Redis::X::Reconnect') if $self->{reconnect};
+  die $m;
 }
 
 
@@ -593,27 +746,64 @@ See also L<Redis::List> for tie interface.
 
 =head2 sadd
 
-  $r->sadd( $key, $member );
+  my $ok = $r->sadd( $key, $member );
+
+=head2 scard
+
+  my $n_elements = $r->scard( $key );
+
+=head2 sdiff
+
+  my @elements = $r->sdiff( $key1, $key2, ... );
+  my $elements = $r->sdiff( $key1, $key2, ... ); # ARRAY ref
+
+=head2 sdiffstore
+
+  my $ok = $r->sdiffstore( $dstkey, $key1, $key2, ... );
+
+=head2 sinter
+
+  my @elements = $r->sinter( $key1, $key2, ... );
+  my $elements = $r->sinter( $key1, $key2, ... ); # ARRAY ref
+
+=head2 sinterstore
+
+  my $ok = $r->sinterstore( $dstkey, $key1, $key2, ... );
+
+=head2 sismember
+
+  my $bool = $r->sismember( $key, $member );
+
+=head2 smembers
+
+  my @elements = $r->smembers( $key );
+  my $elements = $r->smembers( $key ); # ARRAY ref
+
+=head2 smove
+
+  my $ok = $r->smove( $srckey, $dstkey, $element );
+
+=head2 spop
+
+  my $element = $r->spop( $key );
+
+=head2 spop
+
+  my $element = $r->srandmember( $key );
 
 =head2 srem
 
   $r->srem( $key, $member );
 
-=head2 scard
+=head2 sunion
 
-  my $elements = $r->scard( $key );
+  my @elements = $r->sunion( $key1, $key2, ... );
+  my $elements = $r->sunion( $key1, $key2, ... ); # ARRAY ref
 
-=head2 sismember
+=head2 sunionstore
 
-  $r->sismember( $key, $member );
+  my $ok = $r->sunionstore( $dstkey, $key1, $key2, ... );
 
-=head2 sinter
-
-  $r->sinter( $key1, $key2, ... );
-
-=head2 sinterstore
-
-  my $ok = $r->sinterstore( $dstkey, $key1, $key2, ... );
 
 =head1 Multiple databases handling commands
 
@@ -734,9 +924,15 @@ The following persons contributed to this project (alphabetical order):
 
 =item Dirk Vleugels
 
+=item Flavio Poletti
+
 =item Jeremy Zawodny
 
 =item sunnavy at bestpractical.com
+
+=item Thiago Berlitz Rondon
+
+=item Ulrich Habel
 
 =back
 
@@ -745,7 +941,7 @@ The following persons contributed to this project (alphabetical order):
 
 Copyright 2009-2010 Dobrica Pavlinusic, all rights reserved.
 
-Copyright 2011 Pedro Melo, all rights reserved
+Copyright 2011-2012 Pedro Melo, all rights reserved
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

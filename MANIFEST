@@ -17,4 +17,5 @@ t/20-tie-hash.t
 t/pod-coverage.t
 t/pod.t
 t/tlib/Test/SpawnRedisServer.pm
-META.yml                                 Module meta-data (added by MakeMaker)
+META.yml                                 Module YAML meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)
