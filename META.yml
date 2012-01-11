@@ -39,4 +39,4 @@ requires:
   Tie::Hash: 0
   Time::HiRes: 0
   Try::Tiny: 0
-version: 1.925
+version: 1.926

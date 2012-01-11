@@ -15,12 +15,13 @@ sub redis {
   my $port = 11011 + ($$ % 127);
 
   $fh->print("
+    timeout 1
     appendonly no
     vm-enabled no
     daemonize no
     port $port
     bind 127.0.0.1
-    loglevel notice
+    loglevel debug
     logfile redis-server.log
   ");
   $fh->flush;
