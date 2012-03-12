@@ -1,36 +1,78 @@
+
 use strict;
 use warnings;
-use ExtUtils::MakeMaker;
 
-WriteMakefile(
-  NAME          => 'Redis',
-  AUTHOR        => 'Pedro Melo <melo@simplicidade.org>',
-  VERSION_FROM  => 'lib/Redis.pm',
-  ABSTRACT_FROM => 'lib/Redis.pm',
-  PL_FILES      => {},
-  PREREQ_PM     => {
-    'Carp'             => 0,
-    'Data::Dumper'     => 0,
-    'Encode'           => 0,
-    'Exporter'         => 0,
-    'Fcntl'            => 0,
-    'File::Temp'       => 0,
-    'IO::Handle'       => 0,
-    'IO::Select'       => 0,
-    'IO::Socket::INET' => 0,
-    'IO::Socket::UNIX' => 0,
-    'IO::String'       => 0,
-    'IPC::Cmd'         => 0,
-    'POSIX'            => 0,
-    'Scalar::Util'     => 0,
-    'Test::Deep'       => 0,
-    'Test::Exception'  => 0,
-    'Test::Fatal'      => 0,
-    'Test::More'       => 0.96,
-    'Tie::Hash'        => 0,
-    'Time::HiRes'      => 0,
-    'Try::Tiny'        => 0,
+use 5.008;
+
+use ExtUtils::MakeMaker 6.30;
+
+
+
+my %WriteMakefileArgs = (
+  "ABSTRACT" => "Perl binding for Redis database",
+  "AUTHOR" => "Pedro Melo <melo\@cpan.org>",
+  "BUILD_REQUIRES" => {
+    "Exporter" => 0,
+    "File::Find" => 0,
+    "File::Temp" => 0,
+    "IO::String" => 0,
+    "IPC::Cmd" => 0,
+    "POSIX" => 0,
+    "Test::Deep" => 0,
+    "Test::Exception" => 0,
+    "Test::Fatal" => 0,
+    "Test::More" => "0.98"
   },
-  dist  => {COMPRESS => 'gzip -9f', SUFFIX => 'gz'},
-  clean => {FILES    => 'Redis-*'},
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
+  },
+  "DISTNAME" => "Redis",
+  "EXE_FILES" => [],
+  "LICENSE" => "artistic_2",
+  "NAME" => "Redis",
+  "PREREQ_PM" => {
+    "Carp" => 0,
+    "Data::Dumper" => 0,
+    "Encode" => 0,
+    "Fcntl" => 0,
+    "IO::Handle" => 0,
+    "IO::Select" => 0,
+    "IO::Socket::INET" => 0,
+    "IO::Socket::UNIX" => 0,
+    "Scalar::Util" => 0,
+    "Tie::Array" => 0,
+    "Tie::Hash" => 0,
+    "Tie::StdHash" => 0,
+    "Time::HiRes" => 0,
+    "Try::Tiny" => 0,
+    "base" => 0,
+    "strict" => 0,
+    "warnings" => 0
+  },
+  "VERSION" => "1.950",
+  "test" => {
+    "TESTS" => "t/*.t"
+  }
 );
+
+
+unless ( eval { ExtUtils::MakeMaker->VERSION(6.56) } ) {
+  my $br = delete $WriteMakefileArgs{BUILD_REQUIRES};
+  my $pp = $WriteMakefileArgs{PREREQ_PM};
+  for my $mod ( keys %$br ) {
+    if ( exists $pp->{$mod} ) {
+      $pp->{$mod} = $br->{$mod} if $br->{$mod} > $pp->{$mod};
+    }
+    else {
+      $pp->{$mod} = $br->{$mod};
+    }
+  }
+}
+
+delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
+  unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
+
+WriteMakefile(%WriteMakefileArgs);
+
+
+

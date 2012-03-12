@@ -1,34 +1,12 @@
 package Redis::List;
 
+# ABSTRACT: tie Perl arrays to Redis lists
+our $VERSION = '1.950'; # VERSION
+our $AUTHORITY = 'cpan:MELO'; # AUTHORITY
+
 use strict;
 use warnings;
 use base qw/Redis Tie::Array/;
-
-=head1 NAME
-
-Redis::List - tie perl arrays into Redis lists
-
-=head1 SYNOPSYS
-
-    tie @my_list, 'Redis::List', 'list_name', @Redis_new_parameters;
-
-    $value = $my_list[$index];
-    $my_list[$index] = $value;
-
-    $count = @my_list;
-
-    push @my_list, 'values';
-    $value = pop @my_list;
-    unshift @my_list, 'values';
-    $value = shift @my_list;
-
-    ## NOTE: fourth parameter of splice is *NOT* supported for now
-    @other_list = splice(@my_list, 2, 3);
-
-    @my_list = ();
-
-
-=cut
 
 
 sub TIEARRAY {
@@ -105,4 +83,54 @@ sub EXTEND {
 
 sub DESTROY { $_[0]->quit }
 
-1;
+1; ## End of Redis::List
+
+
+__END__
+=pod
+
+=for :stopwords Pedro Melo ACKNOWLEDGEMENTS
+
+=encoding utf-8
+
+=head1 NAME
+
+Redis::List - tie Perl arrays to Redis lists
+
+=head1 VERSION
+
+version 1.950
+
+=head1 SYNOPSYS
+
+    tie @my_list, 'Redis::List', 'list_name', @Redis_new_parameters;
+
+    $value = $my_list[$index];
+    $my_list[$index] = $value;
+
+    $count = @my_list;
+
+    push @my_list, 'values';
+    $value = pop @my_list;
+    unshift @my_list, 'values';
+    $value = shift @my_list;
+
+    ## NOTE: fourth parameter of splice is *NOT* supported for now
+    @other_list = splice(@my_list, 2, 3);
+
+    @my_list = ();
+
+=head1 AUTHOR
+
+Pedro Melo <melo@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2012 by Pedro Melo.
+
+This is free software, licensed under:
+
+  The Artistic License 2.0 (GPL Compatible)
+
+=cut
+

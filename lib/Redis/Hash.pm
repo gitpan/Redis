@@ -1,45 +1,13 @@
 package Redis::Hash;
 
+# ABSTRACT: tie Perl hashes to Redis hashes
+our $VERSION = '1.950'; # VERSION
+our $AUTHORITY = 'cpan:MELO'; # AUTHORITY
+
 use strict;
 use warnings;
 use Tie::Hash;
 use base qw/Redis Tie::StdHash/;
-
-=head1 NAME
-
-Redis::Hash - tie perl hashes into Redis
-
-=head1 SYNOPSYS
-
-    ## Create fake hash using keys like 'hash_prefix:KEY'
-    tie %my_hash, 'Redis::Hash', 'hash_prefix', @Redis_new_parameters;
-    
-    ## Treat the entire Redis database as a hash
-    tie %my_hash, 'Redis::Hash', undef, @Redis_new_parameters;
-    
-    $value = $my_list{$key};
-    $my_list{$key} = $value;
-    
-    @keys   = keys %my_hash;
-    @values = values %my_hash;
-    
-    %my_hash = reverse %my_hash;
-    
-    %my_hash = ();
-
-
-=head1 DESCRIPTION
-
-Ties a Perl hash to Redis. Note that it doesn't use Redis Hashes, but
-implements a fake hash using regular keys like "prefix:KEY".
-
-If no C<prefix> is given, it will tie the entire Redis database
-as a hash.
-
-Future versions will also allow you to use real Redis hash structures.
-
-
-=cut
 
 
 sub TIEHASH {
@@ -94,4 +62,65 @@ sub CLEAR {
   $self->{prefix_keys} = [];
 }
 
-1;
+
+1; ## End of Redis::Hash
+
+
+
+__END__
+=pod
+
+=for :stopwords Pedro Melo ACKNOWLEDGEMENTS
+
+=encoding utf-8
+
+=head1 NAME
+
+Redis::Hash - tie Perl hashes to Redis hashes
+
+=head1 VERSION
+
+version 1.950
+
+=head1 DESCRIPTION
+
+Ties a Perl hash to Redis. Note that it doesn't use Redis Hashes, but
+implements a fake hash using regular keys like "prefix:KEY".
+
+If no C<prefix> is given, it will tie the entire Redis database
+as a hash.
+
+Future versions will also allow you to use real Redis hash structures.
+
+=head1 SYNOPSYS
+
+    ## Create fake hash using keys like 'hash_prefix:KEY'
+    tie %my_hash, 'Redis::Hash', 'hash_prefix', @Redis_new_parameters;
+    
+    ## Treat the entire Redis database as a hash
+    tie %my_hash, 'Redis::Hash', undef, @Redis_new_parameters;
+    
+    $value = $my_list{$key};
+    $my_list{$key} = $value;
+    
+    @keys   = keys %my_hash;
+    @values = values %my_hash;
+    
+    %my_hash = reverse %my_hash;
+    
+    %my_hash = ();
+
+=head1 AUTHOR
+
+Pedro Melo <melo@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2012 by Pedro Melo.
+
+This is free software, licensed under:
+
+  The Artistic License 2.0 (GPL Compatible)
+
+=cut
+
