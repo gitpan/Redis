@@ -1,7 +1,7 @@
 package Redis;
 
 # ABSTRACT: Perl binding for Redis database
-our $VERSION = '1.950'; # VERSION
+our $VERSION = '1.951'; # VERSION
 our $AUTHORITY = 'cpan:MELO'; # AUTHORITY
 
 use warnings;
@@ -628,7 +628,7 @@ Redis - Perl binding for Redis database
 
 =head1 VERSION
 
-version 1.950
+version 1.951
 
 =head1 SYNOPSIS
 

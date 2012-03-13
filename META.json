@@ -49,7 +49,6 @@
             "Scalar::Util" : "0",
             "Tie::Array" : "0",
             "Tie::Hash" : "0",
-            "Tie::StdHash" : "0",
             "Time::HiRes" : "0",
             "Try::Tiny" : "0",
             "base" : "0",
@@ -76,15 +75,15 @@
    "provides" : {
       "Redis" : {
          "file" : "lib/Redis.pm",
-         "version" : "1.950"
+         "version" : "1.951"
       },
       "Redis::Hash" : {
          "file" : "lib/Redis/Hash.pm",
-         "version" : "1.950"
+         "version" : "1.951"
       },
       "Redis::List" : {
          "file" : "lib/Redis/List.pm",
-         "version" : "1.950"
+         "version" : "1.951"
       }
    },
    "release_status" : "stable",
@@ -100,7 +99,7 @@
          "web" : "https://github.com/melo/perl-redis"
       }
    },
-   "version" : "1.950",
+   "version" : "1.951",
    "x_Dist_Zilla" : {
       "plugins" : [
          {
@@ -245,11 +244,6 @@
             "version" : "4.300007"
          },
          {
-            "class" : "Dist::Zilla::Plugin::Test::Pod::No404s",
-            "name" : "@Author::MELO/Test::Pod::No404s",
-            "version" : "1.001"
-         },
-         {
             "class" : "Dist::Zilla::Plugin::Test::UnusedVars",
             "name" : "@Author::MELO/@TestingMania/Test::UnusedVars",
             "version" : "2.0.1"
@@ -308,11 +302,6 @@
             "class" : "Dist::Zilla::Plugin::Test::MinimumVersion",
             "name" : "@Author::MELO/@TestingMania/Test::MinimumVersion",
             "version" : "2.0.1"
-         },
-         {
-            "class" : "Dist::Zilla::Plugin::Test::Pod::LinkCheck",
-            "name" : "@Author::MELO/@TestingMania/Test::Pod::LinkCheck",
-            "version" : "1.001"
          },
          {
             "class" : "Dist::Zilla::Plugin::Test::EOL",

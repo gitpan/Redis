@@ -42,14 +42,13 @@ my %WriteMakefileArgs = (
     "Scalar::Util" => 0,
     "Tie::Array" => 0,
     "Tie::Hash" => 0,
-    "Tie::StdHash" => 0,
     "Time::HiRes" => 0,
     "Try::Tiny" => 0,
     "base" => 0,
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "1.950",
+  "VERSION" => "1.951",
   "test" => {
     "TESTS" => "t/*.t"
   }
