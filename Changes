@@ -1,5 +1,11 @@
 Revision history for Redis
 
+1.952     2012-09-04T11:22:18Z
+    * Added automatic authentication after connection establishment
+    * Support Redis 2.6: Aaron Crane <arc@cpan.org>
+    * Attempt to fix non-blocking read on Windows
+    * Enable travis.ci support on the repository
+
 1.951     2012-03-13T10:17:09Z
     * Remove Tie::StdHash from our dependencies list, its part of core
       and it creates problems with some CPAN clients

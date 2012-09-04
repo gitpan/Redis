@@ -1,7 +1,7 @@
 package Redis;
 
 # ABSTRACT: Perl binding for Redis database
-our $VERSION = '1.951'; # VERSION
+our $VERSION = '1.952'; # VERSION
 our $AUTHORITY = 'cpan:MELO'; # AUTHORITY
 
 use warnings;
@@ -18,6 +18,7 @@ use Encode;
 use Try::Tiny;
 use Scalar::Util ();
 
+use constant WIN32 => $^O =~ /mswin32/i;
 
 
 sub new {
@@ -42,6 +43,8 @@ sub new {
       $args{server} = $2;
     }
   }
+
+  $self->{password} = $args{password} if $args{password};
 
   if ($args{sock}) {
     $self->{server} = $args{sock};
@@ -219,7 +222,7 @@ sub info {
   my $custom_decode = sub {
     my ($reply) = @_;
     return $reply if !defined $reply || ref $reply;
-    return { map { split(/:/, $_, 2) } split(/\r\n/, $reply) };
+    return { map { split(/:/, $_, 2) } grep { /^[^#]/ } split(/\r\n/, $reply) };
   };
 
   my $cb = @_ && ref $_[-1] eq 'CODE' ? pop : undef;
@@ -420,6 +423,14 @@ sub __build_sock {
   $self->{sock} = $self->{builder}->($self)
     || confess("Could not connect to Redis server at $self->{server}: $!");
 
+  if (exists $self->{password}) {
+    try { $self->auth($self->{password}) }
+    catch {
+      $self->{reconnect} = 0;
+      confess("Redis server refused password");
+    };
+  }
+
   return;
 }
 
@@ -595,7 +606,7 @@ sub __try_read_sock {
 
 ### Copied from AnyEvent::Util
 BEGIN {
-  *__fh_nonblocking = ($^O eq 'MSWin32')
+  *__fh_nonblocking = (WIN32)
     ? sub($$) { ioctl $_[0], 0x8004667e, pack "L", $_[1]; }    # FIONBIO
     : sub($$) { fcntl $_[0], F_SETFL, $_[1] ? O_NONBLOCK : 0; };
 }
@@ -613,14 +624,14 @@ sub __throw_reconnect {
 
 1; # End of Redis.pm
 
-
+__END__
 
 =pod
 
+=encoding utf-8
+
 =for :stopwords Pedro Melo ACKNOWLEDGEMENTS cpan testmatrix url annocpan anno bugtracker rt
 cpants kwalitee diff irc mailto metadata placeholders metacpan
-
-=encoding utf-8
 
 =head1 NAME
 
@@ -628,7 +639,7 @@ Redis - Perl binding for Redis database
 
 =head1 VERSION
 
-version 1.951
+version 1.952
 
 =head1 SYNOPSIS
 
@@ -786,6 +797,7 @@ back without utf-8 flag turned on.
     my $r = Redis->new( server => '192.168.0.1:6379', encoding => undef );
     my $r = Redis->new( sock => '/path/to/sock' );
     my $r = Redis->new( reconnect => 60, every => 5000 );
+    my $r = Redis->new( password => 'boo' );
 
 The C<< server >> parameter specifies the Redis server we should connect
 to, via TCP. Use the 'IP:PORT' format. If no C<< server >> option is
@@ -837,6 +849,12 @@ trigger a retry until the new command is sent.
 
 If we cannot re-establish a connection after C<< reconnect >> seconds,
 an exception will be thrown.
+
+If your Redis server requires authentication, you can use the
+C<< password >> attribute. After each established connection (at the
+start or when reconnecting), the Redis C<< AUTH >> command will be send
+to the server. If the password is wrong, an exception will be thrown and
+reconnect will be disabled.
 
 The C<< debug >> parameter enables debug information to STDERR,
 including all interactions with the server. You can also enable debug
@@ -1332,7 +1350,3 @@ This is free software, licensed under:
   The Artistic License 2.0 (GPL Compatible)
 
 =cut
-
-
-__END__
-

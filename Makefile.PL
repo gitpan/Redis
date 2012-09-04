@@ -45,10 +45,11 @@ my %WriteMakefileArgs = (
     "Time::HiRes" => 0,
     "Try::Tiny" => 0,
     "base" => 0,
+    "constant" => 0,
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "1.951",
+  "VERSION" => "1.952",
   "test" => {
     "TESTS" => "t/*.t"
   }

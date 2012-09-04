@@ -11,11 +11,18 @@ use base qw( Exporter );
 our @EXPORT = qw( redis );
 
 sub redis {
+  my %params = (
+    timeout => 120,
+    @_,
+  );
   my ($fh, $fn) = File::Temp::tempfile();
   my $port = 11011 + ($$ % 127);
 
+  unlink('redis-server.log');
+  unlink('dump.rdb');
+
   $fh->print("
-    timeout 1
+    timeout $params{timeout}
     appendonly no
     daemonize no
     port $port
@@ -27,13 +34,14 @@ sub redis {
 
   Test::More::diag("Redis port $port, cfg $fn") if $ENV{REDIS_DEBUG};
 
-  if (! can_run('redis-server')) {
+  my $redis_server_path = $ENV{REDIS_SERVER_PATH} || 'redis-server';
+  if (! can_run($redis_server_path)) {
     Test::More::plan skip_all => "Could not find binary redis-server";
     return;
   }
 
   my $c;
-  eval { $c = spawn_server($ENV{REDIS_SERVER_PATH} || 'redis-server', $fn) };
+  eval { $c = spawn_server($redis_server_path, $fn) };
   if (my $e = $@) {
     Test::More::plan skip_all => "Could not start redis-server: $@";
     return;
