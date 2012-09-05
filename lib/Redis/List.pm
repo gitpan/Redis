@@ -1,7 +1,7 @@
 package Redis::List;
 
 # ABSTRACT: tie Perl arrays to Redis lists
-our $VERSION = '1.952'; # VERSION
+our $VERSION = '1.953'; # VERSION
 our $AUTHORITY = 'cpan:MELO'; # AUTHORITY
 
 use strict;
@@ -99,7 +99,7 @@ Redis::List - tie Perl arrays to Redis lists
 
 =head1 VERSION
 
-version 1.952
+version 1.953
 
 =head1 SYNOPSYS
 

@@ -3,12 +3,8 @@ abstract: 'Perl binding for Redis database'
 author:
   - 'Pedro Melo <melo@cpan.org>'
 build_requires:
-  Exporter: 0
-  File::Find: 0
-  File::Temp: 0
   IO::String: 0
   IPC::Cmd: 0
-  POSIX: 0
   Test::Deep: 0
   Test::Exception: 0
   Test::Fatal: 0
@@ -38,37 +34,21 @@ no_index:
 provides:
   Redis:
     file: lib/Redis.pm
-    version: 1.952
+    version: 1.953
   Redis::Hash:
     file: lib/Redis/Hash.pm
-    version: 1.952
+    version: 1.953
   Redis::List:
     file: lib/Redis/List.pm
-    version: 1.952
+    version: 1.953
 requires:
-  Carp: 0
-  Data::Dumper: 0
-  Encode: 0
-  Fcntl: 0
-  IO::Handle: 0
-  IO::Select: 0
-  IO::Socket::INET: 0
-  IO::Socket::UNIX: 0
-  Scalar::Util: 0
-  Tie::Array: 0
-  Tie::Hash: 0
-  Time::HiRes: 0
   Try::Tiny: 0
-  base: 0
-  constant: 0
   perl: 5.008
-  strict: 0
-  warnings: 0
 resources:
   bugtracker: http://rt.cpan.org/Public/Dist/Display.html?Name=Redis
   homepage: https://github.com/melo/perl-redis
   repository: https://github.com/melo/perl-redis.git
-version: 1.952
+version: 1.953
 x_Dist_Zilla:
   plugins:
     -
@@ -94,10 +74,6 @@ x_Dist_Zilla:
     -
       class: Dist::Zilla::Plugin::PruneFiles
       name: '@Author::MELO/PruneRepoMetaFiles'
-      version: 4.300021
-    -
-      class: Dist::Zilla::Plugin::PruneFiles
-      name: '@Author::MELO/PruneDevelCoverDatabase'
       version: 4.300021
     -
       class: Dist::Zilla::Plugin::Authority
@@ -268,6 +244,10 @@ x_Dist_Zilla:
       name: '@Author::MELO/UploadToCPAN'
       version: 4.300021
     -
+      class: Dist::Zilla::Plugin::Git::CommitBuild
+      name: '@Author::MELO/Git::CommitBuild'
+      version: 1.122460
+    -
       class: Dist::Zilla::Plugin::Git::Check
       name: '@Author::MELO/@Git/Check'
       version: 1.122460
@@ -287,6 +267,10 @@ x_Dist_Zilla:
       class: Dist::Zilla::Plugin::InstallRelease
       name: '@Author::MELO/InstallRelease'
       version: 0.008
+    -
+      class: Dist::Zilla::Plugin::PrereqsClean
+      name: '@Author::MELO/PrereqsClean'
+      version: 0.91
     -
       class: Dist::Zilla::Plugin::Clean
       name: '@Author::MELO/Clean'

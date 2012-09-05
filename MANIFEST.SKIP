@@ -6,6 +6,7 @@
 ^[\._]build
 ^blib/
 ^_build/
+^cover_db/
 ^Makefile$
 \bpm_to_blib$
 ^MYMETA\.
