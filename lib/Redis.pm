@@ -1,7 +1,7 @@
 package Redis;
 
 # ABSTRACT: Perl binding for Redis database
-our $VERSION = '1.961'; # VERSION
+our $VERSION = '1.962'; # VERSION
 our $AUTHORITY = 'cpan:MELO'; # AUTHORITY
 
 use warnings;
@@ -55,7 +55,11 @@ sub new {
     my $on_conn = $self->{on_connect};
     $self->{on_connect} = sub {
       my ($redis) = @_;
-      try { $redis->client_setname($name) };
+      try {
+        my $n = $name;
+        $n = $n->($redis) if ref($n) eq 'CODE';
+        $redis->client_setname($n) if defined $n;
+      };
       $on_conn->(@_) if $on_conn;
       }
   }
@@ -714,14 +718,15 @@ sub __throw_reconnect {
 
 1;    # End of Redis.pm
 
-__END__
+
 
 =pod
 
 =encoding utf-8
 
-=for :stopwords Pedro Melo ACKNOWLEDGEMENTS cpan testmatrix url annocpan anno bugtracker rt
-cpants kwalitee diff irc mailto metadata placeholders metacpan
+=for :stopwords Pedro Melo Damien Krotkine Melo, ACKNOWLEDGEMENTS cpan testmatrix url
+annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata
+placeholders metacpan
 
 =head1 NAME
 
@@ -729,7 +734,7 @@ Redis - Perl binding for Redis database
 
 =head1 VERSION
 
-version 1.961
+version 1.962
 
 =head1 SYNOPSIS
 
@@ -739,7 +744,15 @@ version 1.961
     my $redis = Redis->new(server => 'redis.example.com:8080');
 
     ## Set the connection name (requires Redis 2.6.9)
-    my $redis = Redis->new(server => 'redis.example.com:8080', name => 'my_connection_name');
+    my $redis = Redis->new(
+      server => 'redis.example.com:8080',
+      name => 'my_connection_name',
+    );
+    my $generation = 0;
+    my $redis = Redis->new(
+      server => 'redis.example.com:8080',
+      name => sub { "cache-$$-".++$generation },
+    );
 
     ## Use UNIX domain socket
     my $redis = Redis->new(sock => '/path/to/socket');
@@ -894,7 +907,8 @@ utf-8 flag turned on.
     my $r = Redis->new( reconnect => 60, every => 5000 );
     my $r = Redis->new( password => 'boo' );
     my $r = Redis->new( on_connect => sub { my ($redis) = @_; ... } );
-    my $r = Redis->new( name => 'my_connection_name' ); ## Redis 2.6.9 required
+    my $r = Redis->new( name => 'my_connection_name' );
+    my $r = Redis->new( name => sub { "cache-for-$$" });
 
 The C<< server >> parameter specifies the Redis server we should connect to,
 via TCP. Use the 'IP:PORT' format. If no C<< server >> option is present, we
@@ -959,12 +973,17 @@ object.
 
 You can also set a name for each connection. This can be very useful for
 debugging purposes, using the C<< CLIENT LIST >> command. To set a connection
-name, use the C<< name >> parameter. Please note that there are restrictions on
-the name you can set, the most important of which is, no spaces. See the
-L<CLIENT SETNAME documentation|http://redis.io/commands/client-setname> for all
-the juicy details. This feature is safe to use with all versions of Redis
-servers. If C<< CLIENT SETNAME >> support is not available (Redis servers 2.6.9
-and above only), the name parameter is ignored.
+name, use the C<< name >> parameter. You can use both a scalar value or a
+CodeRef. If the latter, it will be called after each connection, with the Redis
+object, and it should return the connection name to use. If it returns a
+undefined value, Redis will not set the connection name.
+
+Please note that there are restrictions on the name you can set, the most
+important of which is, no spaces. See the L<CLIENT SETNAME
+documentation|http://redis.io/commands/client-setname> for all the juicy
+details. This feature is safe to use with all versions of Redis servers. If C<<
+CLIENT SETNAME >> support is not available (Redis servers 2.6.9 and above
+only), the name parameter is ignored.
 
 The C<< debug >> parameter enables debug information to STDERR, including all
 interactions with the server. You can also enable debug with the C<REDIS_DEBUG>
@@ -1215,6 +1234,100 @@ See also L<Redis::List> for tie interface.
 =head3 sunionstore
 
   my $ok = $r->sunionstore( $dstkey, $key1, $key2, ... );
+
+=head2 Commands operating on hashes
+
+Hashes in Redis cannot be nested as in perl, if you want to store a nested
+hash, you need to serialize the hash first. If you want to have a named
+hash, you can use Redis-hashes. You will find an example in the tests
+of this module t/01-basic.t
+
+=head3 hset
+
+Sets the value to a key in a hash.
+  $r->hset('hashname', $key => $value); ## returns true on success
+
+=head3 hget
+
+Gets the value to a key in a hash.
+
+  my $value = $r->hget('hashname', $key);
+
+=head3 hexists
+
+  if($r->hexists('hashname', $key) {
+    ## do something, the key exists
+  }
+  else {
+    ## the key does not exist
+  }
+
+=head3 hdel
+
+Deletes a key from a hash
+  if($r->hdel('hashname', $key)) {
+    ## key is deleted
+  }
+  else {
+    ## oops
+  }
+
+=head3 hincrby
+
+Adds an integer to a value. The integer is signed, so a negative integer decrements.
+
+  my $key = 'testkey';
+  $r->hset('hashname', $key => 1); ## value -> 1
+  my $increment = 1; ## has to be an integer
+  $r->hincrby('hashname', $key => $increment); ## value -> 2
+  $increment = 5;
+  $r->hincrby('hashname', $key => $increment); ## value -> 7
+  $increment = -1;
+  $r->hincrby('hashname', $key => $increment); ## value -> 6
+
+=head3 hsetnx
+
+Adds a key to a hash unless it is not already set.
+
+  my $key = 'testnx';
+  $r->hsetnx('hashname', $key => 1); ## returns true
+  $r->hsetnx('hashname', $key => 2); ## returns false because key already exists
+
+=head3 hmset
+
+Adds multiple keys to a hash.
+
+  $r->hmset('hashname', 'key1' => 'value1', 'key2' => 'value2'); ## returns true on success
+
+=head3 hmget
+
+Returns multiple keys of a hash.
+
+  my @values = $r->hmget('hashname', 'key1', 'key2');
+
+=head3 hgetall
+
+Returns the whole hash.
+
+  my %hash = $r->hgetall('hashname');
+
+=head3 hkeys
+
+Returns the keys of a hash.
+
+  my @keys = $r->hkeys('hashname');
+
+=head3 hvals
+
+Returns the values of a hash.
+
+  my @values = $r->hvals('hashname');
+
+=head3 hlen
+
+Returns the count of keys in a hash.
+
+  my $keycount = $r->hlen('hashname');
 
 =head2 Sorting
 
@@ -1478,7 +1591,7 @@ You can email the author of this module at C<MELO at cpan.org> asking for help w
 
 =head2 Bugs / Feature Requests
 
-Please report any bugs or feature requests through the web interface at L<https://github.com/melo/perl-redis/issues>. You will be automatically notified of any progress on the request by the system.
+Please report any bugs or feature requests through the web interface at L<https://github.com/PerlRedis/perl-redis/issues>. You will be automatically notified of any progress on the request by the system.
 
 =head2 Source Code
 
@@ -1486,9 +1599,9 @@ The code is open to the world, and available for you to hack on. Please feel fre
 with it, or whatever. If you want to contribute patches, please send me a diff or prod me to pull
 from your repository :)
 
-L<https://github.com/melo/perl-redis>
+L<https://github.com/PerlRedis/perl-redis>
 
-  git clone git://github.com/melo/perl-redis.git
+  git clone git://github.com/PerlRedis/perl-redis.git
 
 =head1 ACKNOWLEDGEMENTS
 
@@ -1526,16 +1639,30 @@ Ulrich Habel
 
 =back
 
-=head1 AUTHOR
+=head1 AUTHORS
+
+=over 4
+
+=item *
 
 Pedro Melo <melo@cpan.org>
 
+=item *
+
+Damien Krotkine <dams@cpan.org>
+
+=back
+
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2012 by Pedro Melo.
+This software is Copyright (c) 2013 by Pedro Melo, Damien Krotkine.
 
 This is free software, licensed under:
 
   The Artistic License 2.0 (GPL Compatible)
 
 =cut
+
+
+__END__
+

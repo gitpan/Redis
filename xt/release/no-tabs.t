@@ -1,8 +1,16 @@
 use strict;
 use warnings;
-use Test::More;
 
-eval 'use Test::NoTabs';
-plan skip_all => 'Test::NoTabs required' if $@;
+# this test was generated with Dist::Zilla::Plugin::NoTabsTests 0.04
 
-all_perl_files_ok();
+use Test::More 0.88;
+use Test::NoTabs;
+
+my @files = (
+    'lib/Redis.pm',
+    'lib/Redis/Hash.pm',
+    'lib/Redis/List.pm'
+);
+
+notabs_ok($_) foreach @files;
+done_testing;

@@ -1,5 +1,10 @@
 Revision history for Redis
 
+1.962     2013-10-16T14:58:30Z
+    * merge #54 (fix for broken test)
+    * Parameter name to new() can be a CodeRef, dynamic connection names
+    * admin: added co-maintainer Damien Krotkine <dams@zarb.org>
+
 1.961     2013-01-23T15:09:47Z
     * Add wait_one_response() for better pipeline management
 

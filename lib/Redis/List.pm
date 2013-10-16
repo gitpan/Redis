@@ -1,7 +1,7 @@
 package Redis::List;
 
 # ABSTRACT: tie Perl arrays to Redis lists
-our $VERSION = '1.961'; # VERSION
+our $VERSION = '1.962'; # VERSION
 our $AUTHORITY = 'cpan:MELO'; # AUTHORITY
 
 use strict;
@@ -85,13 +85,13 @@ sub DESTROY { $_[0]->quit }
 
 1;    ## End of Redis::List
 
-__END__
 
+__END__
 =pod
 
 =encoding utf-8
 
-=for :stopwords Pedro Melo ACKNOWLEDGEMENTS
+=for :stopwords Pedro Melo Damien Krotkine Melo, ACKNOWLEDGEMENTS
 
 =head1 NAME
 
@@ -99,7 +99,7 @@ Redis::List - tie Perl arrays to Redis lists
 
 =head1 VERSION
 
-version 1.961
+version 1.962
 
 =head1 SYNOPSYS
 
@@ -120,16 +120,27 @@ version 1.961
 
     @my_list = ();
 
-=head1 AUTHOR
+=head1 AUTHORS
+
+=over 4
+
+=item *
 
 Pedro Melo <melo@cpan.org>
 
+=item *
+
+Damien Krotkine <dams@cpan.org>
+
+=back
+
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2012 by Pedro Melo.
+This software is Copyright (c) 2013 by Pedro Melo, Damien Krotkine.
 
 This is free software, licensed under:
 
   The Artistic License 2.0 (GPL Compatible)
 
 =cut
+
