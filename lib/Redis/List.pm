@@ -1,8 +1,20 @@
+#
+# This file is part of Redis
+#
+# This software is Copyright (c) 2013 by Pedro Melo, Damien Krotkine.
+#
+# This is free software, licensed under:
+#
+#   The Artistic License 2.0 (GPL Compatible)
+#
 package Redis::List;
+{
+  $Redis::List::VERSION = '1.963';
+}
 
 # ABSTRACT: tie Perl arrays to Redis lists
-our $VERSION = '1.962'; # VERSION
-our $AUTHORITY = 'cpan:MELO'; # AUTHORITY
+# VERSION
+# AUTHORITY
 
 use strict;
 use warnings;
@@ -85,13 +97,9 @@ sub DESTROY { $_[0]->quit }
 
 1;    ## End of Redis::List
 
-
 __END__
+
 =pod
-
-=encoding utf-8
-
-=for :stopwords Pedro Melo Damien Krotkine Melo, ACKNOWLEDGEMENTS
 
 =head1 NAME
 
@@ -99,7 +107,7 @@ Redis::List - tie Perl arrays to Redis lists
 
 =head1 VERSION
 
-version 1.962
+version 1.963
 
 =head1 SYNOPSYS
 
@@ -143,4 +151,3 @@ This is free software, licensed under:
   The Artistic License 2.0 (GPL Compatible)
 
 =cut
-

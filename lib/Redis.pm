@@ -1,8 +1,20 @@
+#
+# This file is part of Redis
+#
+# This software is Copyright (c) 2013 by Pedro Melo, Damien Krotkine.
+#
+# This is free software, licensed under:
+#
+#   The Artistic License 2.0 (GPL Compatible)
+#
 package Redis;
+{
+  $Redis::VERSION = '1.963';
+}
 
 # ABSTRACT: Perl binding for Redis database
-our $VERSION = '1.962'; # VERSION
-our $AUTHORITY = 'cpan:MELO'; # AUTHORITY
+# VERSION
+# AUTHORITY
 
 use warnings;
 use strict;
@@ -26,14 +38,10 @@ use constant EINTR       => eval {Errno::EINTR} || -1E9;
 
 
 sub new {
-  my $class = shift;
-  my %args  = @_;
+  my ($class, %args) = @_;
   my $self  = bless {}, $class;
 
   $self->{debug} = $args{debug} || $ENV{REDIS_DEBUG};
-
-  ## default to lax utf8
-  $self->{encoding} = exists $args{encoding} ? $args{encoding} : 'utf8';
 
   ## Deal with REDIS_SERVER ENV
   if ($ENV{REDIS_SERVER} && !$args{sock} && !$args{server}) {
@@ -43,13 +51,16 @@ sub new {
     elsif ($ENV{REDIS_SERVER} =~ m!^unix:(.+)!) {
       $args{sock} = $1;
     }
-    elsif ($ENV{REDIS_SERVER} =~ m!^(tcp:)?(.+)!) {
-      $args{server} = $2;
+    elsif ($ENV{REDIS_SERVER} =~ m!^(?:tcp:)?(.+)!) {
+      $args{server} = $1;
     }
   }
 
-  $self->{password}   = $args{password}   if $args{password};
-  $self->{on_connect} = $args{on_connect} if $args{on_connect};
+  $args{password}
+    and $self->{password} = $args{password};
+
+  $args{on_connect}
+    and $self->{on_connect} = $args{on_connect};
 
   if (my $name = $args{name}) {
     my $on_conn = $self->{on_connect};
@@ -60,7 +71,8 @@ sub new {
         $n = $n->($redis) if ref($n) eq 'CODE';
         $redis->client_setname($n) if defined $n;
       };
-      $on_conn->(@_) if $on_conn;
+      $on_conn
+        and $on_conn->(@_);
       }
   }
 
@@ -125,8 +137,8 @@ sub __std_cmd {
   my $collect_errors = $cb && uc($command) eq 'EXEC';
 
   ## Fast path, no reconnect;
-  return $self->__run_cmd($command, $collect_errors, undef, $cb, @_)
-    unless $self->{reconnect};
+  $self->{reconnect}
+    or return $self->__run_cmd($command, $collect_errors, undef, $cb, @_);
 
   my @cmd_args = @_;
   $self->__with_reconnect(
@@ -140,12 +152,14 @@ sub __with_reconnect {
   my ($self, $cb) = @_;
 
   ## Fast path, no reconnect
-  return $cb->() unless $self->{reconnect};
+  $self->{reconnect}
+    or return $cb->();
 
   return &try(
     $cb,
     catch {
-      die $_ unless ref($_) eq 'Redis::X::Reconnect';
+      ref($_) eq 'Redis::X::Reconnect'
+        or die $_;
 
       $self->__connect;
       $cb->();
@@ -159,13 +173,13 @@ sub __run_cmd {
   my $ret;
   my $wrapper = $cb && $custom_decode
     ? sub {
-    my ($reply, $error) = @_;
-    $cb->(scalar $custom_decode->($reply), $error);
+      my ($reply, $error) = @_;
+      $cb->(scalar $custom_decode->($reply), $error);
     }
     : $cb || sub {
-    my ($reply, $error) = @_;
-    confess "[$command] $error, " if defined $error;
-    $ret = $reply;
+      my ($reply, $error) = @_;
+      confess "[$command] $error, " if defined $error;
+      $ret = $reply;
     };
 
   $self->__send_command($command, @args);
@@ -213,9 +227,6 @@ sub quit {
   try {
     $self->wait_all_responses;
     $self->__send_command('QUIT');
-  }
-  catch {
-    ## Ignore, we are quiting anyway...
   };
 
   close(delete $self->{sock}) if $self->{sock};
@@ -451,6 +462,7 @@ sub __connect {
   # to reconnect.  The new connection will never get a response to any of
   # the pending commands, so delete all those pending responses now.
   $self->{queue} = [];
+  $self->{pid}   = $$;
 
   ## Fast path, no reconnect
   return $self->__build_sock() unless $self->{reconnect};
@@ -493,8 +505,11 @@ sub __build_sock {
 sub __send_command {
   my $self = shift;
   my $cmd  = uc(shift);
-  my $enc  = $self->{encoding};
   my $deb  = $self->{debug};
+
+  if ($self->{pid} != $$) {
+    $self->__connect;
+  }
 
   my $sock = $self->{sock}
     || $self->__throw_reconnect('Not connected to any server');
@@ -505,8 +520,9 @@ sub __send_command {
   my @cmd     = split /_/, $cmd;
   my $n_elems = scalar(@_) + scalar(@cmd);
   my $buf     = "\*$n_elems\r\n";
-  for my $elem (@cmd, @_) {
-    my $bin = $enc ? encode($enc, $elem) : $elem;
+  for my $bin (@cmd, @_) {
+    # force to consider inputs as bytes strings.
+    Encode::_utf8_off($bin);
     $buf .= defined($bin) ? '$' . length($bin) . "\r\n$bin\r\n" : "\$-1\r\n";
   }
 
@@ -590,8 +606,7 @@ sub __read_line {
   warn "[RECV RAW] '$data'" if $self->{debug};
 
   my $type = substr($data, 0, 1, '');
-  return ($type, $data) unless $self->{encoding};
-  return ($type, decode($self->{encoding}, $data));
+  return ($type, $data);
 }
 
 sub __read_len {
@@ -612,8 +627,7 @@ sub __read_len {
   chomp $data;
   warn "[RECV RAW] '$data'" if $self->{debug};
 
-  return $data unless $self->{encoding};
-  return decode($self->{encoding}, $data);
+  return $data;
 }
 
 
@@ -718,15 +732,9 @@ sub __throw_reconnect {
 
 1;    # End of Redis.pm
 
-
+__END__
 
 =pod
-
-=encoding utf-8
-
-=for :stopwords Pedro Melo Damien Krotkine Melo, ACKNOWLEDGEMENTS cpan testmatrix url
-annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata
-placeholders metacpan
 
 =head1 NAME
 
@@ -734,7 +742,7 @@ Redis - Perl binding for Redis database
 
 =head1 VERSION
 
-version 1.962
+version 1.963
 
 =head1 SYNOPSIS
 
@@ -758,16 +766,12 @@ version 1.962
     my $redis = Redis->new(sock => '/path/to/socket');
 
     ## Enable auto-reconnect
-    ## Try to reconnect every 500ms up to 60 seconds until success
+    ## Try to reconnect every 1s up to 60 seconds until success
     ## Die if you can't after that
     my $redis = Redis->new(reconnect => 60);
 
     ## Try each 100ms upto 2 seconds (every is in milisecs)
     my $redis = Redis->new(reconnect => 2, every => 100);
-
-    ## Disable the automatic utf8 encoding => much more performance
-    ## !!!! This will be the default after 2.000, see ENCODING below
-    my $redis = Redis->new(encoding => undef);
 
     ## Use all the regular Redis commands, they all accept a list of
     ## arguments
@@ -878,20 +882,12 @@ useful for Redis transactions; see L</exec>.
 
 =head1 ENCODING
 
-B<This feature is deprecated and will be removed before 2.000>. You should
-start testing your code with C<< encoding => undef >> because that will be the
-new default with 2.000.
+There is no encoding feature anymore, it has been deprecated and finally
+removed. This module consider that any data sent to the Redis server is a raw
+octets string, even if it has utf8 flag set. And it doesn't do anything when
+getting data from the Redis server.
 
-Since Redis knows nothing about encoding, we are forcing utf-8 flag on all data
-received from Redis. This change was introduced in 1.2001 version. B<Please
-note> that this encoding option severely degrades performance.
-
-You can disable this automatic encoding by passing an option to L</new>: C<<
-encoding => undef >>.
-
-This allows us to round-trip utf-8 encoded characters correctly, but might be
-problem if you push binary junk into Redis and expect to get it back without
-utf-8 flag turned on.
+So, do you pre-encoding or post-decoding operation yourself if needed !
 
 =head1 METHODS
 
@@ -1218,7 +1214,7 @@ See also L<Redis::List> for tie interface.
 
   my $element = $r->spop( $key );
 
-=head3 spop
+=head3 srandmemeber
 
   my $element = $r->srandmember( $key );
 
@@ -1510,6 +1506,13 @@ modes.
 
 The C<shutdown> method does not support pipelined operation.
 
+=head3 slowlog
+
+  my $nr_items = $r->slowlog("len");
+  my @last_ten_items = $r->slowlog("get", 10);
+
+The C<slowlog> command gives access to the server's slow log.
+
 =head2 Multiple databases handling commands
 
 =head3 select
@@ -1527,81 +1530,6 @@ The C<shutdown> method does not support pipelined operation.
 =head3 flushall
 
   $r->flushall;
-
-=head1 SUPPORT
-
-=head2 Perldoc
-
-You can find documentation for this module with the perldoc command.
-
-  perldoc Redis
-
-=head2 Websites
-
-The following websites have more information about this module, and may be of help to you. As always,
-in addition to those websites please use your favorite search engine to discover more resources.
-
-=over 4
-
-=item *
-
-MetaCPAN
-
-A modern, open-source CPAN search engine, useful to view POD in HTML format.
-
-L<http://metacpan.org/release/Redis>
-
-=item *
-
-CPAN Testers
-
-The CPAN Testers is a network of smokers who run automated tests on uploaded CPAN distributions.
-
-L<http://www.cpantesters.org/distro/R/Redis>
-
-=item *
-
-CPAN Testers Matrix
-
-The CPAN Testers Matrix is a website that provides a visual overview of the test results for a distribution on various Perls/platforms.
-
-L<http://matrix.cpantesters.org/?dist=Redis>
-
-=item *
-
-CPAN Testers Dependencies
-
-The CPAN Testers Dependencies is a website that shows a chart of the test results of all dependencies for a distribution.
-
-L<http://deps.cpantesters.org/?module=Redis>
-
-=item *
-
-CPAN Ratings
-
-The CPAN Ratings is a website that allows community ratings and reviews of Perl modules.
-
-L<http://cpanratings.perl.org/d/Redis>
-
-=back
-
-=head2 Email
-
-You can email the author of this module at C<MELO at cpan.org> asking for help with any problems you have.
-
-=head2 Bugs / Feature Requests
-
-Please report any bugs or feature requests through the web interface at L<https://github.com/PerlRedis/perl-redis/issues>. You will be automatically notified of any progress on the request by the system.
-
-=head2 Source Code
-
-The code is open to the world, and available for you to hack on. Please feel free to browse it and play
-with it, or whatever. If you want to contribute patches, please send me a diff or prod me to pull
-from your repository :)
-
-L<https://github.com/PerlRedis/perl-redis>
-
-  git clone git://github.com/PerlRedis/perl-redis.git
 
 =head1 ACKNOWLEDGEMENTS
 
@@ -1662,7 +1590,3 @@ This is free software, licensed under:
   The Artistic License 2.0 (GPL Compatible)
 
 =cut
-
-
-__END__
-

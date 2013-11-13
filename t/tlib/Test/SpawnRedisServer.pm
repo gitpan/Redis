@@ -1,3 +1,12 @@
+#
+# This file is part of Redis
+#
+# This software is Copyright (c) 2013 by Pedro Melo, Damien Krotkine.
+#
+# This is free software, licensed under:
+#
+#   The Artistic License 2.0 (GPL Compatible)
+#
 package    # Hide from PAUSE
   Test::SpawnRedisServer;
 

@@ -1,4 +1,13 @@
 #!perl
+#
+# This file is part of Redis
+#
+# This software is Copyright (c) 2013 by Pedro Melo, Damien Krotkine.
+#
+# This is free software, licensed under:
+#
+#   The Artistic License 2.0 (GPL Compatible)
+#
 
 use warnings;
 use strict;
@@ -38,7 +47,8 @@ cmp_ok($o->get('foo'), 'eq', 'baz', 'get foo = baz');
 
 my $euro = "\x{20ac}";
 ok($o->set(utf8 => $euro), 'set utf8');
-cmp_ok($o->get('utf8'), 'eq', $euro, 'get utf8');
+use Encode;
+cmp_ok(Encode::decode_utf8($o->get('utf8')), 'eq', $euro, 'get utf8');
 
 ok($o->set('test-undef' => 42), 'set test-undef');
 ok($o->exists('test-undef'), 'exists undef');
