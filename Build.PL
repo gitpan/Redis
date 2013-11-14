@@ -19,7 +19,7 @@ my %module_build_args = (
     "Damien Krotkine <dams\@cpan.org>"
   ],
   "dist_name" => "Redis",
-  "dist_version" => "1.963",
+  "dist_version" => "1.964",
   "license" => "artistic_2",
   "module_name" => "Redis",
   "recommends" => {},
@@ -44,17 +44,24 @@ my %module_build_args = (
 );
 
 
+my %fallback_build_requires = (
+  "Digest::SHA" => 0,
+  "File::Spec" => 0,
+  "IO::Handle" => 0,
+  "IO::String" => 0,
+  "IPC::Cmd" => 0,
+  "IPC::Open3" => 0,
+  "Module::Build" => "0.3601",
+  "Test::Deep" => 0,
+  "Test::Fatal" => 0,
+  "Test::More" => "0.98",
+  "Test::SharedFork" => 0
+);
+
+
 unless ( eval { Module::Build->VERSION(0.4004) } ) {
-  my $tr = delete $module_build_args{test_requires};
-  my $br = $module_build_args{build_requires};
-  for my $mod ( keys %$tr ) {
-    if ( exists $br->{$mod} ) {
-      $br->{$mod} = $tr->{$mod} if $tr->{$mod} > $br->{$mod};
-    }
-    else {
-      $br->{$mod} = $tr->{$mod};
-    }
-  }
+  delete $module_build_args{test_requires};
+  $module_build_args{build_requires} = \%fallback_build_requires;
 }
 
 my $build = Module::Build->new(%module_build_args);
