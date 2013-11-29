@@ -4,7 +4,7 @@ use warnings;
 
 use 5.008;
 
-use ExtUtils::MakeMaker 6.30;
+use ExtUtils::MakeMaker 6.63_03;
 
 
 
@@ -15,7 +15,7 @@ my %WriteMakefileArgs = (
     "Module::Build" => "0.3601"
   },
   "CONFIGURE_REQUIRES" => {
-    "ExtUtils::MakeMaker" => "6.30",
+    "ExtUtils::MakeMaker" => "6.63_03",
     "Module::Build" => "0.3601"
   },
   "DISTNAME" => "Redis",
@@ -37,7 +37,7 @@ my %WriteMakefileArgs = (
     "Test::More" => "0.98",
     "Test::SharedFork" => 0
   },
-  "VERSION" => "1.964",
+  "VERSION" => "1.965",
   "test" => {
     "TESTS" => "t/*.t"
   }

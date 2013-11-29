@@ -16,7 +16,7 @@ build_requires:
   Test::More: 0.98
   Test::SharedFork: 0
 configure_requires:
-  ExtUtils::MakeMaker: 6.30
+  ExtUtils::MakeMaker: 6.63_03
   Module::Build: 0.3601
 dynamic_config: 0
 generated_by: 'Dist::Zilla version 5.005, CPAN::Meta::Converter version 2.132830'
@@ -32,4 +32,4 @@ resources:
   bugtracker: https://github.com/PerlRedis/perl-redis/issues
   homepage: https://github.com/PerlRedis/perl-redis
   repository: https://github.com/PerlRedis/perl-redis.git
-version: 1.964
+version: 1.965

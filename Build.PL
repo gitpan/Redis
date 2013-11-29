@@ -10,7 +10,7 @@ my %module_build_args = (
     "Module::Build" => "0.3601"
   },
   "configure_requires" => {
-    "ExtUtils::MakeMaker" => "6.30",
+    "ExtUtils::MakeMaker" => "6.63_03",
     "Module::Build" => "0.3601"
   },
   "dist_abstract" => "Perl binding for Redis database",
@@ -19,7 +19,7 @@ my %module_build_args = (
     "Damien Krotkine <dams\@cpan.org>"
   ],
   "dist_name" => "Redis",
-  "dist_version" => "1.964",
+  "dist_version" => "1.965",
   "license" => "artistic_2",
   "module_name" => "Redis",
   "recommends" => {},

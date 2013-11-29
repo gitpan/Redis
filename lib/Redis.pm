@@ -9,7 +9,7 @@
 #
 package Redis;
 {
-  $Redis::VERSION = '1.964';
+  $Redis::VERSION = '1.965';
 }
 
 # ABSTRACT: Perl binding for Redis database
@@ -62,19 +62,8 @@ sub new {
   $args{on_connect}
     and $self->{on_connect} = $args{on_connect};
 
-  if (my $name = $args{name}) {
-    my $on_conn = $self->{on_connect};
-    $self->{on_connect} = sub {
-      my ($redis) = @_;
-      try {
-        my $n = $name;
-        $n = $n->($redis) if ref($n) eq 'CODE';
-        $redis->client_setname($n) if defined $n;
-      };
-      $on_conn
-        and $on_conn->(@_);
-      }
-  }
+  defined $args{name}
+    and $self->{name} = $args{name};
 
   if ($args{sock}) {
     $self->{server} = $args{sock};
@@ -102,6 +91,13 @@ sub new {
 
 sub is_subscriber { $_[0]{is_subscriber} }
 
+sub select {
+  my $self = shift;
+  my $database = shift;
+  my $ret = $self->__std_cmd('select', $database, @_);
+  $self->{current_database} = $database;
+  $ret;
+}
 
 ### we don't want DESTROY to fallback into AUTOLOAD
 sub DESTROY { }
@@ -324,25 +320,50 @@ sub keys {
 ### PubSub
 sub wait_for_messages {
   my ($self, $timeout) = @_;
-  my $sock = $self->{sock};
 
   my $s = IO::Select->new;
-  $s->add($sock);
 
   my $count = 0;
-MESSAGE:
-  while ($s->can_read($timeout)) {
-    while (1) {
-      my $has_stuff = __try_read_sock($sock);
-      last MESSAGE unless defined $has_stuff;    ## Stop right now if EOF
-      last unless $has_stuff;                    ## back to select until timeout
 
-      my ($reply, $error) = $self->__read_response('WAIT_FOR_MESSAGES');
-      confess "[WAIT_FOR_MESSAGES] $error, " if defined $error;
-      $self->__process_pubsub_msg($reply);
-      $count++;
-    }
-  }
+
+  my $e;
+
+  try {
+    $self->__with_reconnect( sub {
+
+      # the socket can be changed due to reconnection, so get it each time
+      my $sock = $self->{sock};
+      $s->remove($s->handles);
+      $s->add($sock);
+
+      while ($s->can_read($timeout)) {      
+        my $has_stuff = __try_read_sock($sock);
+        # If the socket is ready to read but there is nothing to read, ( so
+        # it's an EOF ), try to reconnect.
+        defined $has_stuff
+          or $self->__throw_reconnect('EOF from server');
+        while (1) {
+          my $has_stuff = __try_read_sock($sock);
+          $has_stuff
+            or last ; ## no data ( or socket became EOF), back to select until
+                      ## timeout
+      
+          my ($reply, $error) = $self->__read_response('WAIT_FOR_MESSAGES');
+          confess "[WAIT_FOR_MESSAGES] $error, " if defined $error;
+          $self->__process_pubsub_msg($reply);
+          $count++;
+        }
+      }
+    
+    });
+
+  } catch {
+    $e = $_;
+};
+
+# if We had an error and it was not an EOF, die
+defined $e && $e ne 'EOF from server'
+  and die $e;
 
   return $count;
 }
@@ -497,10 +518,52 @@ sub __build_sock {
     };
   }
 
-  $self->{on_connect}->($self) if exists $self->{on_connect};
+  $self->__on_connection;
 
   return;
 }
+
+sub __on_connection {
+
+    my ($self) = @_;
+
+    # If we are in PubSub mode we shouldn't perform any command besides
+    # (p)(un)subscribe
+    if (! $self->{is_subscriber}) {
+      defined $self->{name}
+        and try {
+            my $n = $self->{name};
+            $n = $n->($self) if ref($n) eq 'CODE';
+            $self->client_setname($n) if defined $n;
+        };
+  
+      defined $self->{current_database}
+        and $self->select($self->{current_database});
+    }
+
+    # TODO: don't use each
+    while (my ($topic, $cbs) = each %{$self->{subscribers}}) {
+      if ($topic =~ /(p?message):(.*)$/ ) {
+        my ($key, $channel) = ($1, $2);
+        if ($key eq 'message') {
+            $self->__send_command('subscribe', $channel);
+            my (undef, $error) = $self->__read_response('subscribe');
+            defined $error
+              and confess "[subscribe] $error";
+        } else {
+            $self->__send_command('psubscribe', $channel);
+            my (undef, $error) = $self->__read_response('psubscribe');
+            defined $error
+              and confess "[psubscribe] $error";
+        }
+      }
+    }
+
+    defined $self->{on_connect}
+      and $self->{on_connect}->($self);
+
+}
+
 
 sub __send_command {
   my $self = shift;
@@ -634,7 +697,7 @@ sub __read_len {
 #
 # The reason for this code:
 #
-# IO::Select and buffered reads like <$sock> and read() dont mix
+# IO::Select and buffered reads like <$sock> and read() don't mix
 # For example, if I receive two MESSAGE messages (from Redis PubSub),
 # the first read for the first message will probably empty to socket
 # buffer and move the data to the perl IO buffer.
@@ -744,7 +807,7 @@ Redis - Perl binding for Redis database
 
 =head1 VERSION
 
-version 1.964
+version 1.965
 
 =head1 SYNOPSIS
 
@@ -939,7 +1002,7 @@ tcp:127.0.0.1:11011
 
 =back
 
-The C<< encoding >> parameter speficies the encoding we will use to decode all
+The C<< encoding >> parameter specifies the encoding we will use to decode all
 the data we receive and encode all the data sent to the redis server. Due to
 backwards-compatibility we default to C<< utf8 >>. To disable all this
 encoding/decoding, you must use C<< encoding => undef >>. B<< This is the
@@ -950,7 +1013,7 @@ future version might add other filtering options though.
 
 The C<< reconnect >> option enables auto-reconnection mode. If we cannot
 connect to the Redis server, or if a network write fails, we enter retry mode.
-We will try a new connection every C<< every >> miliseconds (1000ms by
+We will try a new connection every C<< every >> milliseconds (1000ms by
 default), up-to C<< reconnect >> seconds.
 
 Be aware that read errors will always thrown an exception, and will not trigger
@@ -964,8 +1027,8 @@ attribute. After each established connection (at the start or when
 reconnecting), the Redis C<< AUTH >> command will be send to the server. If the
 password is wrong, an exception will be thrown and reconnect will be disabled.
 
-You can also provide a code reference that will be immediatly after each
-sucessfull connection. The C<< on_connect >> attribute is used to provide the
+You can also provide a code reference that will be immediately after each
+successful connection. The C<< on_connect >> attribute is used to provide the
 code reference, and it will be called with the first parameter being the Redis
 object.
 
@@ -1384,7 +1447,7 @@ Publishes the C<< $message >> to the C<< $topic >>.
   );
 
 Subscribe one or more topics. Messages published into one of them will be
-received by Redis, and the specificed callback will be executed.
+received by Redis, and the specified callback will be executed.
 
 =head3 unsubscribe
 
@@ -1424,9 +1487,9 @@ callbacks.
 
 Requires a single parameter, the number of seconds to wait for messages. Use 0
 to wait for ever. If a positive non-zero value is used, it will return after
-that ammount of seconds without a single notification.
+that amount of seconds without a single notification.
 
-Please note that the timeout is not a commitement to return control to the
+Please note that the timeout is not a commitment to return control to the
 caller at most each C<timeout> seconds, but more a idle timeout, were control
 will return to the caller if Redis is idle (as in no messages were received
 during the timeout period) for more than C<timeout> seconds.

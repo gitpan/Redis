@@ -29,3 +29,9 @@ t/50-fork_safe.t
 t/release-distmeta.t
 t/release-pod-coverage.t
 t/tlib/Test/SpawnRedisServer.pm
+tools/benchmarks/read_vs_sysread.pl
+tools/benchmarks/readline_vs_sysread_vs_recv/client-readline.pl
+tools/benchmarks/readline_vs_sysread_vs_recv/client-recv.pl
+tools/benchmarks/readline_vs_sysread_vs_recv/client-sysread.pl
+tools/benchmarks/readline_vs_sysread_vs_recv/run.pl
+tools/benchmarks/readline_vs_sysread_vs_recv/server-generator.pl
