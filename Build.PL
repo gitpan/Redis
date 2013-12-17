@@ -19,7 +19,7 @@ my %module_build_args = (
     "Damien Krotkine <dams\@cpan.org>"
   ],
   "dist_name" => "Redis",
-  "dist_version" => "1.965",
+  "dist_version" => "1.966",
   "license" => "artistic_2",
   "module_name" => "Redis",
   "recommends" => {},

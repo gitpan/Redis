@@ -9,6 +9,9 @@ dist.ini
 lib/Redis.pm
 lib/Redis/Hash.pm
 lib/Redis/List.pm
+redis-server-127.0.0.1:11071.log
+redis-server-127.0.0.1:11127.log
+redis-server-127.0.0.1:11135.log
 scripts/publish.pl
 scripts/redis-benchmark.pl
 t/00-compile.t

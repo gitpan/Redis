@@ -1,0 +1,48 @@
+                _._                                                  
+           _.-``__ ''-._                                             
+      _.-``    `.  `_.  ''-._           Redis 2.8.3 (00000000/0) 64 bit
+  .-`` .-```.  ```\/    _.,_ ''-._                                   
+ (    '      ,       .-`  | `,    )     Running in stand alone mode
+ |`-._`-...-` __...-.``-._|'` _.-'|     Port: 11127
+ |    `-._   `._    /     _.-'    |     PID: 36692
+  `-._    `-._  `-./  _.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |           http://redis.io        
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |                                  
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+      `-._    `-.__.-'    _.-'                                       
+          `-._        _.-'                                           
+              `-.__.-'                                               
+
+[36692] 17 Dec 09:37:01.713 # Server started, Redis version 2.8.3
+[36692] 17 Dec 09:37:01.719 * The server is now ready to accept connections on port 11127
+[36692] 17 Dec 09:37:01.720 - Accepted 127.0.0.1:60719
+[36692] 17 Dec 09:37:01.720 - 1 clients connected (0 slaves), 968608 bytes in use
+[36692] 17 Dec 09:37:01.721 - Client closed connection
+[36692] 17 Dec 09:37:01.722 - Accepted 127.0.0.1:60720
+[36692] 17 Dec 09:37:01.722 - Client closed connection
+[36692] 17 Dec 09:37:01.723 - Accepted 127.0.0.1:60721
+[36692] 17 Dec 09:37:01.724 - Client closed connection
+[36692] 17 Dec 09:37:01.724 - Accepted 127.0.0.1:60722
+[36692] 17 Dec 09:37:01.725 - Client closed connection
+[36692] 17 Dec 09:37:01.726 - Accepted 127.0.0.1:60723
+[36692] 17 Dec 09:37:01.726 - Client closed connection
+[36692] 17 Dec 09:37:01.727 - Accepted 127.0.0.1:60724
+[36692] 17 Dec 09:37:01.727 - Client closed connection
+[36692] 17 Dec 09:37:01.728 - Accepted 127.0.0.1:60725
+[36692] 17 Dec 09:37:01.728 - Client closed connection
+[36692] 17 Dec 09:37:01.728 - Accepted 127.0.0.1:60726
+[36692] 17 Dec 09:37:01.729 - Client closed connection
+[36692] 17 Dec 09:37:01.730 - Accepted 127.0.0.1:60727
+[36692] 17 Dec 09:37:01.730 - Client closed connection
+[36692] 17 Dec 09:37:01.731 - Accepted 127.0.0.1:60728
+[36692] 17 Dec 09:37:01.731 - Client closed connection
+[36692] 17 Dec 09:37:01.732 - Accepted 127.0.0.1:60729
+[36692] 17 Dec 09:37:01.733 - Client closed connection
+[36692] 17 Dec 09:37:01.734 - Accepted 127.0.0.1:60730
+[36692] 17 Dec 09:37:03.031 - Closing idle client
+[36692] 17 Dec 09:37:06.765 - DB 0: 1 keys (0 volatile) in 4 slots HT.
+[36692] 17 Dec 09:37:06.765 - DB 4: 1 keys (0 volatile) in 4 slots HT.
+[36692] 17 Dec 09:37:06.772 - 0 clients connected (0 slaves), 951552 bytes in use

@@ -9,7 +9,7 @@
 #
 package Redis;
 {
-  $Redis::VERSION = '1.965';
+  $Redis::VERSION = '1.966';
 }
 
 # ABSTRACT: Perl binding for Redis database
@@ -807,7 +807,7 @@ Redis - Perl binding for Redis database
 
 =head1 VERSION
 
-version 1.965
+version 1.966
 
 =head1 SYNOPSIS
 
@@ -1306,6 +1306,7 @@ of this module t/01-basic.t
 =head3 hset
 
 Sets the value to a key in a hash.
+
   $r->hset('hashname', $key => $value); ## returns true on success
 
 =head3 hget
@@ -1326,6 +1327,7 @@ Gets the value to a key in a hash.
 =head3 hdel
 
 Deletes a key from a hash
+
   if($r->hdel('hashname', $key)) {
     ## key is deleted
   }
