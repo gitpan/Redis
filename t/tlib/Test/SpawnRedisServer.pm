@@ -18,11 +18,10 @@ use IPC::Cmd qw(can_run);
 use POSIX ":sys_wait_h";
 use base qw( Exporter );
 
+use Net::EmptyPort qw(empty_port);
+
 our @EXPORT    = qw( redis );
 our @EXPORT_OK = qw( redis reap );
-
-## FIXME: for the love of $Deity... move to Test::TCP, will you??
-my $port = 11011 + ($$ % 127);
 
 sub redis {
   my %params = (
@@ -32,7 +31,7 @@ sub redis {
 
   my ($fh, $fn) = File::Temp::tempfile();
 
-  $port++;
+  my $port = empty_port();
 
   my $local_port = $port;
   $params{port}
@@ -134,6 +133,7 @@ sub reap {
   $limit = 3  unless $limit;
 
   my $try = 0;
+  local $?;
   while ($try++ < $limit) {
     my $ok = waitpid($pid, WNOHANG);
     $try = 0, last if $ok > 0;

@@ -9,7 +9,7 @@
 #
 package Redis;
 {
-  $Redis::VERSION = '1.967';
+  $Redis::VERSION = '1.968';
 }
 
 # ABSTRACT: Perl binding for Redis database
@@ -80,7 +80,7 @@ sub new {
             my $socket = IO::Socket::UNIX->new(
                 Peer => $self->{server},
                 ( $self->{cnx_timeout} ? ( Timeout => $self->{cnx_timeout} ) : () ),
-            );
+            ) or return;
             IO::Socket::Timeout->enable_timeouts_on($socket);
             $self->{read_timeout}
               and $socket->read_timeout($self->{read_timeout});
@@ -104,7 +104,7 @@ sub new {
                 PeerAddr => $self->{server},
                 Proto    => 'tcp',
                 ( $self->{cnx_timeout} ? ( Timeout => $self->{cnx_timeout} ) : () ),
-            );
+            ) or return;
             IO::Socket::Timeout->enable_timeouts_on($socket);
             $self->{read_timeout}
               and $socket->read_timeout($self->{read_timeout});
@@ -124,7 +124,7 @@ sub new {
   $self->{is_subscriber} = 0;
   $self->{subscribers}   = {};
 
-  $self->__connect;
+  $self->connect unless $args{no_auto_connect_on_new};
 
   return $self;
 }
@@ -197,7 +197,7 @@ sub __with_reconnect {
       ref($_) eq 'Redis::X::Reconnect'
         or die $_;
 
-      $self->__connect;
+      $self->connect;
       $cb->();
     }
   );
@@ -515,7 +515,7 @@ sub __is_valid_command {
 
 
 ### Socket operations
-sub __connect {
+sub connect {
   my ($self) = @_;
   delete $self->{sock};
 
@@ -611,7 +611,7 @@ sub __send_command {
   my $deb  = $self->{debug};
 
   if ($self->{pid} != $$) {
-    $self->__connect;
+    $self->connect;
   }
 
   my $sock = $self->{sock}
@@ -657,7 +657,7 @@ sub __read_response {
   return $self->__read_response_r($cmd, $collect_errors) unless $self->{debug};
 
   my ($result, $error) = $self->__read_response_r($cmd, $collect_errors);
-  warn "[RECV] $cmd ", Dumper($result, $error) if $self->{debug};
+  warn "[RECV] $cmd ", Dumper($result, $error);
   return $result, $error;
 }
 
@@ -839,13 +839,15 @@ __END__
 
 =pod
 
+=encoding UTF-8
+
 =head1 NAME
 
 Redis - Perl binding for Redis database
 
 =head1 VERSION
 
-version 1.967
+version 1.968
 
 =head1 SYNOPSIS
 
@@ -1081,6 +1083,12 @@ You can also provide a code reference that will be immediately after each
 successful connection. The C<< on_connect >> attribute is used to provide the
 code reference, and it will be called with the first parameter being the Redis
 object.
+
+You can also provide C<< no_auto_connect_on_new >> in which case C<<
+new >> won't call C<< $obj->connect >> for you implicitly, you'll have
+to do that yourself. This is useful for figuring out how long
+connection setup takes so you can configure the C<< cnx_timeout >>
+appropriately.
 
 You can also set a name for each connection. This can be very useful for
 debugging purposes, using the C<< CLIENT LIST >> command. To set a connection
@@ -1478,7 +1486,7 @@ tells you the pattern that matched.
 
 =back
 
-See the L<Pub/Sub notes|http://redis.io/topics/pubsub> for more information
+See the L<Pub-Sub notes|http://redis.io/topics/pubsub> for more information
 about the messages you will receive on your callbacks after each L</subscribe>,
 L</unsubscribe>, L</psubscribe> and L</punsubscribe>.
 
@@ -1492,7 +1500,7 @@ Publishes the C<< $message >> to the C<< $topic >>.
 
   $r->subscribe(
       @topics_to_subscribe_to,
-      sub {
+      my $savecallback = sub {
         my ($message, $topic, $subscribed_topic) = @_;
         ...
       },
@@ -1503,14 +1511,17 @@ received by Redis, and the specified callback will be executed.
 
 =head3 unsubscribe
 
-  $r->unsubscribe(@topic_list, sub { my ($m, $t, $s) = @_; ... });
+  $r->unsubscribe(@topic_list, $savecallback);
 
-Stops receiving messages for all the topics in C<@topic_list>.
+Stops receiving messages via C<$savecallback> for all the topics in
+C<@topic_list>. B<WARNING:> it is important that you give the same calleback
+that you used for subscribtion. The value of the CodeRef must be the same, as
+this is how internally the code identifies it.
 
 =head3 psubscribe
 
   my @topic_matches = ('prefix1.*', 'prefix2.*');
-  $r->psubscribe(@topic_matches, sub { my ($m, $t, $s) = @_; ... });
+  $r->psubscribe(@topic_matches, my $savecallback = sub { my ($m, $t, $s) = @_; ... });
 
 Subscribes a pattern of topics. All messages to topics that match the pattern
 will be delivered to the callback.
@@ -1518,9 +1529,12 @@ will be delivered to the callback.
 =head3 punsubscribe
 
   my @topic_matches = ('prefix1.*', 'prefix2.*');
-  $r->punsubscribe(@topic_matches, sub { my ($m, $t, $s) = @_; ... });
+  $r->punsubscribe(@topic_matches, $savecallback);
 
-Stops receiving messages for all the topics pattern matches in C<@topic_list>.
+Stops receiving messages via C<$savecallback> for all the topics pattern
+matches in C<@topic_list>. B<WARNING:> it is important that you give the same
+calleback that you used for subscribtion. The value of the CodeRef must be the
+same, as this is how internally the code identifies it.
 
 =head3 is_subscriber
 

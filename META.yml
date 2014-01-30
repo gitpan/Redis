@@ -14,11 +14,12 @@ build_requires:
   Test::Fatal: 0
   Test::More: 0.98
   Test::SharedFork: 0
+  Test::TCP: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.63_03
   Module::Build::Tiny: 0.030
 dynamic_config: 0
-generated_by: 'Dist::Zilla version 4.300039, CPAN::Meta::Converter version 2.132830'
+generated_by: 'Dist::Zilla version 5.005, CPAN::Meta::Converter version 2.132830'
 license: artistic_2
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -32,4 +33,4 @@ resources:
   bugtracker: https://github.com/PerlRedis/perl-redis/issues
   homepage: https://github.com/PerlRedis/perl-redis
   repository: https://github.com/PerlRedis/perl-redis.git
-version: 1.967
+version: 1.968
