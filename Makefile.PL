@@ -96,7 +96,7 @@ my %WriteMakefileArgs = (
     "Test::SharedFork" => 0,
     "Test::TCP" => 0
   },
-  "VERSION" => "1.968",
+  "VERSION" => "1.969",
   "test" => {
     "TESTS" => "t/*.t"
   }

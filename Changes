@@ -1,5 +1,10 @@
 Revision history for Redis
 
+1.969     2014-01-30 13:19:28 Europe/Amsterdam
+
+    * Clarification for (p)unsubscribe commands.
+    * use Test::TCP for testing
+
 1.968     2014-01-30 12:19:11 Europe/Amsterdam
 
     * Add a no_auto_connect_on_new parameter to new() to allow users

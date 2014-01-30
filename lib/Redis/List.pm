@@ -9,7 +9,7 @@
 #
 package Redis::List;
 {
-  $Redis::List::VERSION = '1.968';
+  $Redis::List::VERSION = '1.969';
 }
 
 # ABSTRACT: tie Perl arrays to Redis lists
@@ -109,7 +109,7 @@ Redis::List - tie Perl arrays to Redis lists
 
 =head1 VERSION
 
-version 1.968
+version 1.969
 
 =head1 SYNOPSYS
 

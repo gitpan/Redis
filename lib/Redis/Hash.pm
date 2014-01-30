@@ -9,7 +9,7 @@
 #
 package Redis::Hash;
 {
-  $Redis::Hash::VERSION = '1.968';
+  $Redis::Hash::VERSION = '1.969';
 }
 
 # ABSTRACT: tie Perl hashes to Redis hashes
@@ -89,7 +89,7 @@ Redis::Hash - tie Perl hashes to Redis hashes
 
 =head1 VERSION
 
-version 1.968
+version 1.969
 
 =head1 DESCRIPTION
 
