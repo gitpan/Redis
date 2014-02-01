@@ -9,7 +9,7 @@
 #
 package Redis;
 {
-  $Redis::VERSION = '1.970';
+  $Redis::VERSION = '1.971';
 }
 
 # ABSTRACT: Perl binding for Redis database
@@ -839,15 +839,13 @@ __END__
 
 =pod
 
-=encoding UTF-8
-
 =head1 NAME
 
 Redis - Perl binding for Redis database
 
 =head1 VERSION
 
-version 1.970
+version 1.971
 
 =head1 SYNOPSIS
 
@@ -1109,6 +1107,14 @@ interactions with the server. You can also enable debug with the C<REDIS_DEBUG>
 environment variable.
 
 =head2 Connection Handling
+
+=head3 connect
+
+  $r->connect();
+
+Connects to the Redis server. This is done by default when the obect is
+constructed using C<new()>, unless C<no_auto_connect_on_new> has been set. See
+this option in the C<new()> constructor.
 
 =head3 quit
 
