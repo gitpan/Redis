@@ -3,14 +3,15 @@ use warnings;
 
 # this test was generated with Dist::Zilla::Plugin::Test::Compile 2.037
 
-use Test::More  tests => 3 + ($ENV{AUTHOR_TESTING} ? 1 : 0);
+use Test::More  tests => 4 + ($ENV{AUTHOR_TESTING} ? 1 : 0);
 
 
 
 my @module_files = (
     'Redis.pm',
     'Redis/Hash.pm',
-    'Redis/List.pm'
+    'Redis/List.pm',
+    'Redis/Sentinel.pm'
 );
 
 

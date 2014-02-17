@@ -9,6 +9,7 @@ dist.ini
 lib/Redis.pm
 lib/Redis/Hash.pm
 lib/Redis/List.pm
+lib/Redis/Sentinel.pm
 scripts/publish.pl
 scripts/redis-benchmark.pl
 t/00-compile.t
