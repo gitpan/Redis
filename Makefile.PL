@@ -8,8 +8,8 @@ use warnings;
 
 BEGIN {
 my %configure_requires = (
-    'ExtUtils::MakeMaker' => '6.63_03',
     'Module::Build::Tiny' => '0.030',
+    'ExtUtils::MakeMaker' => '6.63_03',
 );
 
 my @missing = grep {
@@ -98,7 +98,7 @@ my %WriteMakefileArgs = (
     "Test::SharedFork" => 0,
     "Test::TCP" => "1.19"
   },
-  "VERSION" => "1.973_01",
+  "VERSION" => "1.973_02",
   "test" => {
     "TESTS" => "t/*.t"
   }
