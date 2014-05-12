@@ -1,5 +1,10 @@
 Revision history for Redis
 
+1.973_04  2014-05-12 22:53:06 Europe/Amsterdam
+
+   * release again, last one was screwed up.
+   * fix #85 (PR #86) reconnect during transaction
+
 1.973_03  2014-05-12 22:49:07 Europe/Amsterdam
 
    * fix #85 (PR #86) reconnect during transaction
