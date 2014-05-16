@@ -35,4 +35,4 @@ resources:
   bugtracker: https://github.com/PerlRedis/perl-redis/issues
   homepage: https://github.com/PerlRedis/perl-redis
   repository: https://github.com/PerlRedis/perl-redis.git
-version: 1.973_04
+version: 1.974

@@ -9,7 +9,7 @@
 #
 package Redis;
 {
-  $Redis::VERSION = '1.973_04';
+  $Redis::VERSION = '1.974';
 }
 
 # ABSTRACT: Perl binding for Redis database
@@ -904,7 +904,7 @@ Redis - Perl binding for Redis database
 
 =head1 VERSION
 
-version 1.973_04
+version 1.974
 
 =head1 SYNOPSIS
 
