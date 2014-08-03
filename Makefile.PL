@@ -8,7 +8,7 @@ use warnings;
 
 BEGIN {
 my %configure_requires = (
-    'Module::Build::Tiny' => '0.030',
+    'Module::Build::Tiny' => '0.036',
     'ExtUtils::MakeMaker' => '6.63_03',
 );
 
@@ -73,7 +73,7 @@ my %WriteMakefileArgs = (
   "BUILD_REQUIRES" => {},
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => "6.63_03",
-    "Module::Build::Tiny" => "0.030"
+    "Module::Build::Tiny" => "0.036"
   },
   "DISTNAME" => "Redis",
   "EXE_FILES" => [],
@@ -90,15 +90,13 @@ my %WriteMakefileArgs = (
     "IO::String" => 0,
     "IPC::Cmd" => 0,
     "IPC::Open3" => 0,
-    "Pod::Coverage::TrustPod" => 0,
-    "Test::CPAN::Meta" => 0,
     "Test::Deep" => 0,
     "Test::Fatal" => 0,
     "Test::More" => "0.98",
     "Test::SharedFork" => 0,
     "Test::TCP" => "1.19"
   },
-  "VERSION" => "1.974",
+  "VERSION" => "1.975",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -113,8 +111,6 @@ my %FallbackPrereqs = (
   "IO::String" => 0,
   "IPC::Cmd" => 0,
   "IPC::Open3" => 0,
-  "Pod::Coverage::TrustPod" => 0,
-  "Test::CPAN::Meta" => 0,
   "Test::Deep" => 0,
   "Test::Fatal" => 0,
   "Test::More" => "0.98",

@@ -9,7 +9,7 @@
 #
 package Redis::Sentinel;
 {
-  $Redis::Sentinel::VERSION = '1.974';
+  $Redis::Sentinel::VERSION = '1.975';
 }
 
 # ABSTRACT: Redis Sentinel interface
@@ -57,7 +57,7 @@ Redis::Sentinel - Redis Sentinel interface
 
 =head1 VERSION
 
-version 1.974
+version 1.975
 
 =head1 SYNOPSIS
 
@@ -79,7 +79,7 @@ and C<service>, which are silently ignored.
 
 =head1 METHODS
 
-All the methods of the C<Redis> package are supported, plus the aditional following methods:
+All the methods of the C<Redis> package are supported, plus the additional following methods:
 
 =head2 get_service_address
 

@@ -9,7 +9,7 @@
 #
 package Redis;
 {
-  $Redis::VERSION = '1.974';
+  $Redis::VERSION = '1.975';
 }
 
 # ABSTRACT: Perl binding for Redis database
@@ -904,7 +904,7 @@ Redis - Perl binding for Redis database
 
 =head1 VERSION
 
-version 1.974
+version 1.975
 
 =head1 SYNOPSIS
 
@@ -930,9 +930,9 @@ version 1.974
     ## Enable auto-reconnect
     ## Try to reconnect every 1s up to 60 seconds until success
     ## Die if you can't after that
-    my $redis = Redis->new(reconnect => 60, every => 1000);
+    my $redis = Redis->new(reconnect => 60, every => 1_000_000);
 
-    ## Try each 100ms upto 2 seconds (every is in nanosecond)
+    ## Try each 100ms upto 2 seconds (every is in microseconds)
     my $redis = Redis->new(reconnect => 2, every => 100_000);
 
     ## Enable connection timeout (in seconds)
@@ -1138,7 +1138,7 @@ tcp:127.0.0.1:11011
 
 The C<< reconnect >> option enables auto-reconnection mode. If we cannot
 connect to the Redis server, or if a network write fails, we enter retry mode.
-We will try a new connection every C<< every >> nanoseconds (1 ms by
+We will try a new connection every C<< every >> microseconds (1 ms by
 default), up-to C<< reconnect >> seconds.
 
 Be aware that read errors will always thrown an exception, and will not trigger
