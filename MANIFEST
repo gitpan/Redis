@@ -27,6 +27,7 @@ t/11-timeout.t
 t/20-tie-hash.t
 t/30-scripts.t
 t/42-client_cmds.t
+t/44-no-unicode-bug.t
 t/50-fork_safe.t
 t/release-distmeta.t
 t/release-pod-coverage.t

@@ -9,7 +9,7 @@
 #
 package Redis::Sentinel;
 {
-  $Redis::Sentinel::VERSION = '1.975';
+  $Redis::Sentinel::VERSION = '1.976';
 }
 
 # ABSTRACT: Redis Sentinel interface
@@ -57,7 +57,7 @@ Redis::Sentinel - Redis Sentinel interface
 
 =head1 VERSION
 
-version 1.975
+version 1.976
 
 =head1 SYNOPSIS
 
